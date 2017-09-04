@@ -28,12 +28,12 @@ def initialize_parameters():
 
 	parameters = {"W1": W1,
 				 "b1": b1,
-                 "W2": W2,
-                 "b2": b2,
-                 "W3": W3,
-                 "b3": b3,
-                 "W_out": W_out,
-                 "b_out": b_out}
+				 "W2": W2,
+				 "b2": b2,
+				 "W3": W3,
+				 "b3": b3,
+				 "W_out": W_out,
+				 "b_out": b_out}
 
 	return parameters 
 
@@ -69,13 +69,13 @@ def foward_propagation(data, parameters):
              "Z_out": Z_out,
              "A_out": A_out}
 
-	return A_out
+	return Z_out
 
 def nn_train(cache, y, x):
 
 	prediction = cache
 	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
-	optimizer = tf.train.AdamOptimizer(learning_rate = 0.05).minimize(cost)
+	optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 	num_epochs = 5
 	
