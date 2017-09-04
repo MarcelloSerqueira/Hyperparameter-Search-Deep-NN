@@ -75,7 +75,7 @@ def nn_train(cache, y, x):
 
 	prediction = cache
 	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
-	optimizer = tf.train.AdamOptimizer(learning_rate = 0.05).minimize(cost)
+	optimizer = tf.train.AdamOptimizer().minimize(cost)
 
 	num_epochs = 5
 	
