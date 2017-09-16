@@ -1,17 +1,6 @@
 import tensorflow as tf
-from tensorflow.examples.tutorials.mnist import input_data
-
-mnist = input_data.read_data_sets("/temp/data", one_hot=True)
-
-units_layer1 = 500
-units_layer2 = 500
-units_layer3 = 500
-
-n_classes = 10
-batch_size = 100
-
-x = tf.placeholder('float', [None, 784])
-y = tf.placeholder('float')
+import numpy as np
+import data_utils as du
 
 def initialize_parameters():
 	W1 = tf.Variable(tf.random_normal([784, units_layer1]))
@@ -38,6 +27,7 @@ def initialize_parameters():
 	return parameters 
 
 def foward_propagation(data, parameters):
+	print(data.shape)
 	W1 = parameters["W1"]
 	b1 = parameters["b1"]
 	W2 = parameters["W2"]
@@ -57,7 +47,7 @@ def foward_propagation(data, parameters):
 	Z3 = tf.add(tf.matmul(A2, W3), b3)
 	A3 = tf.nn.relu(Z3)
 
-	Z_out = tf.add(tf.matmul(A3, W_out), b_out)
+	Z_out = tf.matmul(A3, W_out) + b_out
 	A_out = tf.nn.relu(Z_out)
 
 	cache = {"Z1": Z1,
@@ -72,27 +62,47 @@ def foward_propagation(data, parameters):
 	return Z_out
 
 def nn_train(cache, y, x):
-
 	prediction = cache
-	cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y))
-	optimizer = tf.train.AdamOptimizer().minimize(cost)
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)) #Ou reduce_sum
+	optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
 
-	num_epochs = 5
+	epochs_no = 10
 	
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
 
-		for epoch in range(num_epochs):
+		for epoch in range(epochs_no):
 			epoch_loss = 0
-			for _ in range(int(mnist.train.num_examples/batch_size)):
-				epoch_x, epoch_y = mnist.train.next_batch(batch_size)
-				_, c = sess.run([optimizer, cost], feed_dict = {x: epoch_x, y: epoch_y})
-				epoch_loss += c
-			print('Epoch', epoch, 'Num_epoch', num_epochs, 'loss', epoch_loss)
+			i=0
+			while i < len(trainX):
+				start = i
+				end = i+batch_size
+				batch_x = np.array(trainX[start:end])
+				batch_y = np.array(trainY[start:end])
 
+				_, c = sess.run([optimizer, loss], feed_dict={x: batch_x, y: batch_y})
+				epoch_loss += c
+				i+=batch_size
+			print('Epoch', epoch+1, 'epoch', epochs_no, 'loss', epoch_loss)
 		correct =  tf.equal(tf.argmax(prediction, 1), tf.argmax(y,1))
 		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-		print('Accuracy', accuracy.eval({x:mnist.test.images, y:mnist.test.labels}))
+		print('Accuracy:',accuracy.eval({x:testX, y:testY}))
+
+
+units_layer1 = 1500
+units_layer2 = 2000
+units_layer3 = 3000
+
+n_classes = 10
+batch_size = 300
+
+trainX, trainY, testX, testY = du.csv_to_numpy_array("mnist_all_rotation_normalized_float_train_valid.amat", "mnist_all_rotation_normalized_float_test.amat")
+
+num_x = trainX.shape[1]
+num_y = trainY.shape[1]
+
+x = tf.placeholder('float', [None, num_x])
+y = tf.placeholder('int32', [None, num_y])
 
 parameters = initialize_parameters()
 feed_for = foward_propagation(x, parameters)
