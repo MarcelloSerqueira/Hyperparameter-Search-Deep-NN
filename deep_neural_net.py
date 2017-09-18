@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import pandas as pd
 import data_utils as du
 
 def initialize_parameters():
@@ -27,7 +28,6 @@ def initialize_parameters():
 	return parameters 
 
 def foward_propagation(data, parameters):
-	print(data.shape)
 	W1 = parameters["W1"]
 	b1 = parameters["b1"]
 	W2 = parameters["W2"]
@@ -89,14 +89,14 @@ def nn_train(cache, y, x):
 		print('Accuracy:',accuracy.eval({x:testX, y:testY}))
 
 
-units_layer1 = 1500
-units_layer2 = 2000
-units_layer3 = 3000
+units_layer1 = 500
+units_layer2 = 500
+units_layer3 = 500
 
 n_classes = 10
-batch_size = 300
+batch_size = 20
 
-trainX, trainY, testX, testY = du.csv_to_numpy_array("mnist_all_rotation_normalized_float_train_valid.amat", "mnist_all_rotation_normalized_float_test.amat")
+trainX, trainY, testX, testY = du.csv_to_numpy_array("datasets\mnist_train.amat", "datasets\mnist_test.amat")
 
 num_x = trainX.shape[1]
 num_y = trainY.shape[1]
