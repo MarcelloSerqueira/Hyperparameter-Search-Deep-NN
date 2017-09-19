@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-import pandas as pd
 import data_utils as du
+import sys
 
 def initialize_parameters():
 	W1 = tf.Variable(tf.random_normal([784, units_layer1]))
@@ -66,7 +66,7 @@ def nn_train(cache, y, x):
 	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)) #Ou reduce_sum
 	optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
 
-	epochs_no = 10
+	epochs_no = 15
 	
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -79,24 +79,25 @@ def nn_train(cache, y, x):
 				end = i+batch_size
 				batch_x = np.array(trainX[start:end])
 				batch_y = np.array(trainY[start:end])
-
 				_, c = sess.run([optimizer, loss], feed_dict={x: batch_x, y: batch_y})
 				epoch_loss += c
 				i+=batch_size
 			print('Epoch', epoch+1, 'epoch', epochs_no, 'loss', epoch_loss)
+		nn_performance_acc(prediction, y)
+
+
+def nn_performance_acc(prediction, y):
 		correct =  tf.equal(tf.argmax(prediction, 1), tf.argmax(y,1))
 		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
 		print('Accuracy:',accuracy.eval({x:testX, y:testY}))
 
+units_layer1 = int(sys.argv[1])
+units_layer2 = int(sys.argv[2])
+units_layer3 = int(sys.argv[3])
 
-units_layer1 = 500
-units_layer2 = 500
-units_layer3 = 500
+trainX, trainY, testX, testY, n_classes = du.csv_to_numpy_array("datasets\convex_train.amat", "datasets\convex_test.amat")
 
-n_classes = 10
-batch_size = 20
-
-trainX, trainY, testX, testY = du.csv_to_numpy_array("datasets\mnist_train.amat", "datasets\mnist_test.amat")
+batch_size = 100
 
 num_x = trainX.shape[1]
 num_y = trainY.shape[1]

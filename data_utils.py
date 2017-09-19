@@ -14,13 +14,14 @@ def csv_to_numpy_array(train_path, test_path):
 	return transform_data(traindata, testdata)
 
 def transform_data(x_train, x_test):
-	hot_classes = 10
 	[trainX, trainY] = np.hsplit(x_train,[784])
+	num_classes = len(np.unique(trainY))
+	
 	trainY = np.int_(trainY.reshape(-1))
-	trainY = np.eye(hot_classes)[trainY] #one hot vector
+	trainY = np.eye(num_classes)[trainY] #one hot vector
 
 	[testX, testY] = np.hsplit(x_test,[784])
 	testY = np.int_(testY.reshape(-1))
-	testY = np.eye(hot_classes)[testY] #one hot vector
+	testY = np.eye(num_classes)[testY] #one hot vector
 
-	return trainX, trainY, testX, testY
+	return trainX, trainY, testX, testY, num_classes
