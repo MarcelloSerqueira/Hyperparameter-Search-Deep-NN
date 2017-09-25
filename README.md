@@ -1,1 +1,1 @@
-# Hyperparameter-Search-Deep-NN
+# Hyperparameter Evaluation in a Deep Neural Net
