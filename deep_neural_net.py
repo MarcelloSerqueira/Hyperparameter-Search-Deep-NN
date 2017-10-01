@@ -1,9 +1,16 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 import tensorflow as tf
 import numpy as np
 import data_utils as du
 import sys
+import datetime
 
 def initialize_parameters():
+	units_layer1 = int(sys.argv[1])
+	units_layer2 = int(sys.argv[2])
+	units_layer3 = int(sys.argv[3])
+
 	W1 = tf.Variable(tf.random_normal([784, units_layer1]))
 	b1 = tf.Variable(tf.random_normal([units_layer1]))
 
@@ -11,7 +18,7 @@ def initialize_parameters():
 	b2 = tf.Variable(tf.random_normal([units_layer2]))
 
 	W3 = tf.Variable(tf.random_normal([units_layer2, units_layer3]))
-	b3 =tf.Variable(tf.random_normal([units_layer3]))
+	b3 = tf.Variable(tf.random_normal([units_layer3]))
 
 	W_out = tf.Variable(tf.random_normal([units_layer3, n_classes]))
 	b_out = tf.Variable(tf.random_normal([n_classes]))
@@ -25,7 +32,7 @@ def initialize_parameters():
 				 "W_out": W_out,
 				 "b_out": b_out}
 
-	return parameters 
+	return parameters
 
 def foward_propagation(data, parameters):
 	W1 = parameters["W1"]
@@ -61,12 +68,18 @@ def foward_propagation(data, parameters):
 
 	return Z_out
 
-def nn_train(cache, y, x):
-	prediction = cache
-	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)) #Ou reduce_sum
-	optimizer = tf.train.AdamOptimizer(0.01).minimize(loss)
+def nn_train(z_out, y, x, lr, W_out):
+	learning_rate = float(sys.argv[4])
+	beta = float(sys.argv[5])
+
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=z_out, labels=y)) #Ou reduce_sum
+	regularizer = tf.nn.l2_loss(W_out) #L2
+	loss = tf.reduce_mean(loss + beta * regularizer)
+
+	optimizer = tf.train.AdamOptimizer(lr).minimize(loss)
 
 	epochs_no = 15
+	batch_size = 50
 	
 	with tf.Session() as sess:
 		sess.run(tf.global_variables_initializer())
@@ -79,32 +92,32 @@ def nn_train(cache, y, x):
 				end = i+batch_size
 				batch_x = np.array(trainX[start:end])
 				batch_y = np.array(trainY[start:end])
-				_, c = sess.run([optimizer, loss], feed_dict={x: batch_x, y: batch_y})
+				_, c = sess.run([optimizer, loss], feed_dict={x: batch_x, y: batch_y, lr: learning_rate})
 				epoch_loss += c
 				i+=batch_size
 			print('Epoch', epoch+1, 'epoch', epochs_no, 'loss', epoch_loss)
-		nn_performance_acc(prediction, y)
+			#if epoch == 10:
+				#learning_rate = 0.005 LR after 10 epochs...
+		nn_performance_acc(z_out, y)
 
-
-def nn_performance_acc(prediction, y):
-		correct =  tf.equal(tf.argmax(prediction, 1), tf.argmax(y,1))
+def nn_performance_acc(z_out, y):
+		correct =  tf.equal(tf.argmax(z_out, 1), tf.argmax(y,1))
 		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-		print('Accuracy:',accuracy.eval({x:testX, y:testY}))
+		acc = accuracy.eval({x:predX, y:predY})
+		end = datetime.datetime.now()
+		print('***', acc, start, end, os.environ['COMPUTERNAME'], os.path.basename(sys.argv[0]), int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), sep="|")
 
-units_layer1 = int(sys.argv[1])
-units_layer2 = int(sys.argv[2])
-units_layer3 = int(sys.argv[3])
+start = datetime.datetime.now()
 
-trainX, trainY, testX, testY, n_classes = du.csv_to_numpy_array("datasets\convex_train.amat", "datasets\convex_test.amat")
-
-batch_size = 100
+trainX, trainY, predX, predY, n_classes = du.csv_to_numpy_array("datasets\mnist_train.csv", "datasets\mnist_val.csv")
 
 num_x = trainX.shape[1]
 num_y = trainY.shape[1]
 
-x = tf.placeholder('float', [None, num_x])
-y = tf.placeholder('int32', [None, num_y])
+x = tf.placeholder(tf.float32, [None, num_x])
+y = tf.placeholder(tf.float32, [None, num_y])
+lr = tf.placeholder(tf.float32)
 
 parameters = initialize_parameters()
-feed_for = foward_propagation(x, parameters)
-nn_train(feed_for, y, x)
+z_out = foward_propagation(x, parameters)
+nn_train(z_out, y, x, lr, parameters["W_out"])
