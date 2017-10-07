@@ -5,13 +5,14 @@ import numpy as np
 import data_utils as du
 import sys
 import datetime
+from sklearn.metrics import precision_score, f1_score, recall_score, accuracy_score
 
 def initialize_parameters():
 	units_layer1 = int(sys.argv[1])
 	units_layer2 = int(sys.argv[2])
 	units_layer3 = int(sys.argv[3])
 
-	W1 = tf.Variable(tf.random_normal([784, units_layer1]))
+	W1 = tf.Variable(tf.random_normal([num_x, units_layer1]))
 	b1 = tf.Variable(tf.random_normal([units_layer1]))
 
 	W2 = tf.Variable(tf.random_normal([units_layer1, units_layer2]))
@@ -68,17 +69,17 @@ def foward_propagation(data, parameters):
 
 	return Z_out
 
-def nn_train(z_out, y, x, lr, W_out):
+def nn_train(prediction, y, x, lr, W_out):
 	learning_rate = float(sys.argv[4])
 	beta = float(sys.argv[5])
 
-	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=z_out, labels=y)) #Ou reduce_sum
+	loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction, labels=y)) #Ou reduce_sum
 	regularizer = tf.nn.l2_loss(W_out) #L2
 	loss = tf.reduce_mean(loss + beta * regularizer)
 
 	optimizer = tf.train.AdamOptimizer(lr).minimize(loss)
 
-	epochs_no = 15
+	epochs_no = 10
 	batch_size = 50
 	
 	with tf.Session() as sess:
@@ -95,21 +96,35 @@ def nn_train(z_out, y, x, lr, W_out):
 				_, c = sess.run([optimizer, loss], feed_dict={x: batch_x, y: batch_y, lr: learning_rate})
 				epoch_loss += c
 				i+=batch_size
-			print('Epoch', epoch+1, 'epoch', epochs_no, 'loss', epoch_loss)
+			print('Epoch', epoch+1, 'of', epochs_no, '| loss:', epoch_loss)
 			#if epoch == 10:
 				#learning_rate = 0.005 LR after 10 epochs...
-		nn_performance_acc(z_out, y)
 
-def nn_performance_acc(z_out, y):
-		correct =  tf.equal(tf.argmax(z_out, 1), tf.argmax(y,1))
-		accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-		acc = accuracy.eval({x:predX, y:predY})
+		nn_performance_metrics(prediction, y, sess)
+
+def nn_performance_metrics(prediction, y, sess):
+		pred_model =  tf.argmax(prediction, 1)
+		pred_model = sess.run(pred_model, feed_dict={x:predX, y:predY})
+		pred_true =  tf.argmax(y, 1)
+		pred_true = sess.run(pred_true, feed_dict={x:predX, y:predY})
+
+		precision = precision_score(pred_true, pred_model, average='macro')
+		recall = recall_score(pred_true, pred_model, average='macro')
+		f1 = f1_score(pred_true, pred_model, average='macro')
+		acc = accuracy_score(pred_true, pred_model)
+
+		print('\n')
+		print('================================')
+		print('Precision: ', precision, '\n','Recall: ', recall, '\n' 'F1-score: ', f1, '\n' 'Accuracy: ', acc)
+		print('================================')
+		print('\n')
 		end = datetime.datetime.now()
 		print('***', acc, start, end, os.environ['COMPUTERNAME'], os.path.basename(sys.argv[0]), int(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3]), float(sys.argv[4]), float(sys.argv[5]), sep="|")
 
+
 start = datetime.datetime.now()
 
-trainX, trainY, predX, predY, n_classes = du.csv_to_numpy_array("datasets\mnist_train.csv", "datasets\mnist_val.csv")
+trainX, trainY, predX, predY, n_classes = du.csv_to_numpy_array("datasets\cosmos_train.csv", "datasets\cosmos_test.csv")
 
 num_x = trainX.shape[1]
 num_y = trainY.shape[1]
