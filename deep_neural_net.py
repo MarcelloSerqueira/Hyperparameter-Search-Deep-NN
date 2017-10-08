@@ -5,6 +5,7 @@ import numpy as np
 import data_utils as du
 import sys
 import datetime
+import time
 from sklearn.metrics import precision_score, f1_score, recall_score, accuracy_score
 
 def initialize_parameters():
@@ -79,7 +80,7 @@ def nn_train(prediction, y, x, lr, W_out):
 
 	optimizer = tf.train.AdamOptimizer(lr).minimize(loss)
 
-	epochs_no = 10
+	epochs_no = 7
 	batch_size = 50
 	
 	with tf.Session() as sess:
@@ -115,7 +116,7 @@ def nn_performance_metrics(prediction, y, sess):
 
 		print('\n')
 		print('================================')
-		print('Precision: ', precision, '\n','Recall: ', recall, '\n' 'F1-score: ', f1, '\n' 'Accuracy: ', acc)
+		print('Precision: ', precision, '\n','Recall: ', recall, '\n' 'F1-score: ', f1, '\n' 'Accuracy: ', acc, '\n', 'Time: ', time.time()-now)
 		print('================================')
 		print('\n')
 		end = datetime.datetime.now()
@@ -124,7 +125,7 @@ def nn_performance_metrics(prediction, y, sess):
 
 start = datetime.datetime.now()
 
-trainX, trainY, predX, predY, n_classes = du.csv_to_numpy_array("datasets\cosmos_train.csv", "datasets\cosmos_test.csv")
+trainX, trainY, predX, predY, n_classes = du.csv_to_numpy_array("datasets\mnist_train.csv", "datasets\mnist_val.csv")
 
 num_x = trainX.shape[1]
 num_y = trainY.shape[1]
@@ -133,6 +134,7 @@ x = tf.placeholder(tf.float32, [None, num_x])
 y = tf.placeholder(tf.float32, [None, num_y])
 lr = tf.placeholder(tf.float32)
 
+now = time.time()
 parameters = initialize_parameters()
 z_out = foward_propagation(x, parameters)
 nn_train(z_out, y, x, lr, parameters["W_out"])
